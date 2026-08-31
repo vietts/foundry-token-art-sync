@@ -1,0 +1,9 @@
+{
+  "id": "arte-token",
+  "title": "Arte del token",
+  "description": "Tiene il token allineato al ritratto dell'attore, senza sovrascrivere le scelte fatte apposta.",
+  "version": "1.0.0",
+  "compatibility": { "minimum": "13", "verified": "14" },
+  "authors": [{ "name": "Francesco Nguyen" }],
+  "esmodules": ["arte-token.mjs"]
+}
