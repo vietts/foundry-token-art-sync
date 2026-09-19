@@ -1,0 +1,51 @@
+{
+  "ARTETOKEN": {
+    "settings": {
+      "attivo": {
+        "name": "Sync the token to the portrait",
+        "hint": "When you give an actor a new portrait, the token follows — but only if it was already following, or was still a placeholder. A token chosen on purpose stays as it is."
+      },
+      "soloPng": {
+        "name": "NPCs only",
+        "hint": "Leave player characters out, even when their token was following the portrait."
+      },
+      "segnaposto": {
+        "name": "Placeholder portraits",
+        "hint": "One image path per line. These are never copied to a token, and a token that still has one is treated as not chosen."
+      },
+      "prefissi": {
+        "name": "Placeholder folders",
+        "hint": "One path prefix per line: everything under it is treated as a placeholder (default: Foundry's built-in icons)."
+      },
+      "cartellaMiniature": {
+        "name": "Thumbnail folder",
+        "hint": "If the portrait is at <folder>/x and the token at /x, they are the same art at two resolutions and are not synced (dnd5e convention). Empty = disabled."
+      }
+    },
+    "menu": {
+      "name": "Existing actors",
+      "label": "Sync existing tokens…",
+      "hint": "Shows a preview, then syncs only tokens that are empty or still a placeholder. Never touches a token that already has its own art."
+    },
+    "dialog": {
+      "title": "Sync existing tokens",
+      "summary": "<strong>{daAllineare}</strong> actors to sync, <strong>{saltati}</strong> left as they are.",
+      "colActor": "Actor",
+      "colToken": "The token becomes",
+      "ring": "(ring)",
+      "why": "Why the others stay",
+      "confirm": "Sync {n} actors",
+      "cancel": "Cancel",
+      "close": "Close",
+      "done": "Token art: {n} actors synced."
+    },
+    "motivo": {
+      "segnaposto": "the portrait is empty or a placeholder",
+      "nonPng": "not an NPC",
+      "wildcard": "wildcard token",
+      "allineati": "already in sync",
+      "miniatura": "the portrait is the thumbnail of the same token",
+      "tokenScelto": "the token already has its own art"
+    }
+  }
+}

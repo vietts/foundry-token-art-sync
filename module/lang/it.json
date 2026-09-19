@@ -1,0 +1,51 @@
+{
+  "ARTETOKEN": {
+    "settings": {
+      "attivo": {
+        "name": "Allinea il token al ritratto",
+        "hint": "Quando dai un ritratto a un attore, il token lo segue — ma solo se stava già seguendo, o se era ancora al segnaposto. Un token scelto apposta resta dov'è."
+      },
+      "soloPng": {
+        "name": "Solo i PNG",
+        "hint": "Lascia fuori i personaggi giocanti, anche quando il loro token seguiva il ritratto."
+      },
+      "segnaposto": {
+        "name": "Ritratti segnaposto",
+        "hint": "Un percorso per riga. Non vengono mai copiati sul token, e un token che ne ha ancora uno è considerato non scelto."
+      },
+      "prefissi": {
+        "name": "Cartelle di segnaposto",
+        "hint": "Un prefisso per riga: tutto ciò che sta sotto è trattato come segnaposto (default: le icone di serie di Foundry)."
+      },
+      "cartellaMiniature": {
+        "name": "Cartella delle miniature",
+        "hint": "Se il ritratto sta in <cartella>/x e il token in /x, sono la stessa arte a due risoluzioni e non si allineano (convenzione dnd5e). Vuoto = disattivato."
+      }
+    },
+    "menu": {
+      "name": "Attori esistenti",
+      "label": "Allinea i token esistenti…",
+      "hint": "Mostra un'anteprima e allinea solo i token vuoti o al segnaposto. Non tocca mai un token che ha già arte sua."
+    },
+    "dialog": {
+      "title": "Allinea i token esistenti",
+      "summary": "<strong>{daAllineare}</strong> attori da allineare, <strong>{saltati}</strong> lasciati come sono.",
+      "colActor": "Attore",
+      "colToken": "Il token diventa",
+      "ring": "(anello)",
+      "why": "Perché gli altri restano",
+      "confirm": "Allinea {n} attori",
+      "cancel": "Annulla",
+      "close": "Chiudi",
+      "done": "Arte del token: {n} attori allineati."
+    },
+    "motivo": {
+      "segnaposto": "il ritratto è vuoto o segnaposto",
+      "nonPng": "non è un PNG",
+      "wildcard": "token wildcard",
+      "allineati": "già allineati",
+      "miniatura": "il ritratto è la miniatura dello stesso token",
+      "tokenScelto": "il token ha già arte sua"
+    }
+  }
+}

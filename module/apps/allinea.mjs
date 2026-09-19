@@ -4,6 +4,9 @@ const { ApplicationV2, DialogV2 } = foundry.applications.api;
 
 const esc = testo => String(testo ?? "").replace(/[&<>"']/g,
   c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const t = (chiave, dati) => dati ? game.i18n.format(`ARTETOKEN.${chiave}`, dati) : game.i18n.localize(`ARTETOKEN.${chiave}`);
+const CODICE_DEL_MOTIVO = Object.fromEntries(Object.entries(arte.MOTIVI).map(([codice, testo]) => [testo, codice]));
+const motivoTradotto = testo => CODICE_DEL_MOTIVO[testo] ? t(`motivo.${CODICE_DEL_MOTIVO[testo]}`) : testo;
 const nomeFile = src => decodeURIComponent(String(src).split("/").pop());
 
 /** Legge le impostazioni e le trasforma nella forma che la libreria si aspetta. */
@@ -38,15 +41,14 @@ export async function applicaPiano(piano) {
 
 function contenuto(piano) {
   const righe = piano.daAllineare.map(p =>
-    `<tr><td>${esc(p.name)}</td><td><code>${esc(nomeFile(p.src))}</code>${p.anello ? " (anello)" : ""}</td></tr>`).join("");
+    `<tr><td>${esc(p.name)}</td><td><code>${esc(nomeFile(p.src))}</code>${p.anello ? ` ${esc(t("dialog.ring"))}` : ""}</td></tr>`).join("");
   const motivi = Object.entries(piano.riepilogo)
     .sort((a, b) => b[1] - a[1])
-    .map(([motivo, n]) => `<li>${n} — ${esc(motivo)}</li>`).join("");
+    .map(([motivo, n]) => `<li>${n} — ${esc(motivoTradotto(motivo))}</li>`).join("");
   return `
-    <p><strong>${piano.daAllineare.length}</strong> attori da allineare,
-       <strong>${piano.saltati.length}</strong> lasciati come sono.</p>
-    ${righe ? `<div style="max-height:240px;overflow:auto"><table style="width:100%"><thead><tr><th>Attore</th><th>Il token diventa</th></tr></thead><tbody>${righe}</tbody></table></div>` : ""}
-    ${motivi ? `<details><summary>Perche' gli altri restano</summary><ul>${motivi}</ul></details>` : ""}`;
+    <p>${t("dialog.summary", { daAllineare: piano.daAllineare.length, saltati: piano.saltati.length })}</p>
+    ${righe ? `<div style="max-height:240px;overflow:auto"><table style="width:100%"><thead><tr><th>${esc(t("dialog.colActor"))}</th><th>${esc(t("dialog.colToken"))}</th></tr></thead><tbody>${righe}</tbody></table></div>` : ""}
+    ${motivi ? `<details><summary>${esc(t("dialog.why"))}</summary><ul>${motivi}</ul></details>` : ""}`;
 }
 
 /**
@@ -57,18 +59,18 @@ export async function allinea({ dryRun = false } = {}) {
   const piano = pianoMondo();
   if (dryRun) return piano;
   if (!piano.daAllineare.length) {
-    await DialogV2.prompt({ window: { title: "Arte del token" }, content: contenuto(piano), ok: { label: "Chiudi" } });
+    await DialogV2.prompt({ window: { title: t("dialog.title") }, content: contenuto(piano), ok: { label: t("dialog.close") } });
     return piano;
   }
   const conferma = await DialogV2.confirm({
-    window: { title: "Allinea i token esistenti" },
+    window: { title: t("dialog.title") },
     content: contenuto(piano),
-    yes: { label: `Allinea ${piano.daAllineare.length} attori` },
-    no: { label: "Annulla" }
+    yes: { label: t("dialog.confirm", { n: piano.daAllineare.length }) },
+    no: { label: t("dialog.cancel") }
   });
   if (!conferma) return piano;
   const n = await applicaPiano(piano);
-  ui.notifications.info(`Arte del token: ${n} attori allineati.`);
+  ui.notifications.info(t("dialog.done", { n }));
   return piano;
 }
 

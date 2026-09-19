@@ -74,6 +74,19 @@ export function isMiniatura(img, src, regole = REGOLE_DEFAULT) {
   return Boolean(cartella) && img.includes(cartella) && img.replace(cartella, "/") === src;
 }
 
+/**
+ * I motivi con cui un attore viene lasciato com'e' nell'allineamento in blocco. Il testo e' per chi
+ * legge il codice e i test; l'interfaccia li traduce per codice (vedi lang/ e apps/allinea.mjs).
+ */
+export const MOTIVI = Object.freeze({
+  segnaposto: "il ritratto e' vuoto o segnaposto",
+  nonPng: "non e' un PNG",
+  wildcard: "token wildcard",
+  allineati: "gia' allineati",
+  miniatura: "il ritratto e' la miniatura dello stesso token",
+  tokenScelto: "il token ha gia' arte sua"
+});
+
 const salta = motivo => ({ sync: false, motivo });
 
 /** Il changeset da scrivere. Un posto solo per il nome dei campi. */
@@ -128,12 +141,12 @@ export function decideTokenArt(actor, { onlyNpc = false, soloSeSegnaposto = fals
   const token = actor?.prototypeToken ?? {};
   const src = token?.texture?.src ?? "";
 
-  if (isSegnaposto(img, regole)) return salta("il ritratto e' vuoto o segnaposto");
-  if (onlyNpc && actor?.type !== "npc") return salta("non e' un PNG");
-  if (token?.randomImg) return salta("token wildcard");
-  if (src === img) return salta("gia' allineati");
-  if (isMiniatura(img, src, regole)) return salta("il ritratto e' la miniatura dello stesso token");
-  if (soloSeSegnaposto && !isSegnaposto(src, regole)) return salta("il token ha gia' arte sua");
+  if (isSegnaposto(img, regole)) return salta(MOTIVI.segnaposto);
+  if (onlyNpc && actor?.type !== "npc") return salta(MOTIVI.nonPng);
+  if (token?.randomImg) return salta(MOTIVI.wildcard);
+  if (src === img) return salta(MOTIVI.allineati);
+  if (isMiniatura(img, src, regole)) return salta(MOTIVI.miniatura);
+  if (soloSeSegnaposto && !isSegnaposto(src, regole)) return salta(MOTIVI.tokenScelto);
 
   const esito = { sync: true, src: img };
   // Alla nascita non c'e' un "ritratto vecchio": il soggetto segue solo se e' un segnaposto.

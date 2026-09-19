@@ -1,81 +1,71 @@
-# arte-token
+# Token Art Sync (`arte-token`)
 
-Modulo Foundry (v13/v14, qualsiasi sistema) che tiene il **token allineato al
-ritratto** dell'attore, senza mai ribaltare una scelta fatta apposta.
+A Foundry VTT module (v14, any game system) that keeps an actor's **token art in sync with its
+portrait**, without ever overriding a choice you made on purpose.
 
-Sta su `il tuo server`. Va acceso **in ogni mondo** in cui lo vuoi.
+*Italiano: [README.it.md](README.it.md)*
 
-## La regola
+## The rule
 
-Il caso di tutti i giorni e' la **modifica**, non la creazione: un attore non si
-crea con la sua arte gia' addosso — nasce col token di default e il ritratto
-glielo dai dopo. Quindi:
+The everyday case is an **edit**, not a creation: an actor is born with the default token and you
+give it a portrait afterwards. So:
 
-- **`preUpdateActor`** — dai un ritratto a un attore e il token lo segue, ma
-  **solo se stava gia' seguendo**: se prima era uguale al vecchio ritratto, o se
-  era ancora un segnaposto. Un token differenziato di proposito resta dov'e'.
-- **`preCreateActor`** — serve agli import da compendio, che arrivano col
-  ritratto gia' nel payload. Riempie solo i token vuoti o al segnaposto.
+- **On portrait change** — the token follows, but **only if it was already following**: if it
+  matched the old portrait, or was still a placeholder. A token you differentiated on purpose stays.
+- **On creation** — for compendium imports, which arrive with the portrait already in the payload.
+  Only empty or placeholder tokens are filled.
 
-Entrambi scrivono *prima* della scrittura vera: parte un update solo, e il token
-non compare sbagliato per poi cambiare sotto gli occhi.
+Both write *before* the actual save, so a single update happens and the token never flashes wrong.
 
-## Cosa non tocca, mai
+## What it never touches
 
-- **I ritratti segnaposto.** La lista esatta (`mystery-man`, `cowled`, il
-  `dragon-head` di daggerheart) piu' tutto quello che sta sotto `icons/svg/`,
-  che e' dove i sistemi tengono i loro default. Il drago e' il caso che brucia:
-  e' l'`img` di **tutti** e 264 gli avversari del compendio daggerheart 2.8.2,
-  propagarlo cancellerebbe l'arte buona in silenzio.
-- **La convenzione dnd5e `tokens/thumbs/`.** Li' il ritratto e' la miniatura
-  dello stesso token: sul Bone Devil sono 137 KB contro 698 KB, allinearli
-  abbassa la risoluzione.
-- **I token wildcard** (`randomImg`).
-- **I token gia' scelti.** Alla nascita, un import che porta con se' il suo
-  token; alla modifica, un token che non seguiva il ritratto.
+- **Placeholder portraits** — never copied onto a token (Foundry's `icons/svg/` by default, plus
+  your own list). A blind sync would otherwise stamp the placeholder over good art.
+- **Thumbnail conventions** — when the portrait is `…/thumbs/x` and the token is `…/x`
+  (dnd5e), they are the same art at two resolutions; syncing would lower the token's quality.
+- **Wildcard tokens** (`randomImg`).
+- **Tokens already chosen** — one that arrives with its own art, or that wasn't following.
 
-## Impostazioni
+## Settings
 
-*Configura impostazioni → Impostazioni modulo*
+*Configure Settings → Module Settings*
 
-- **Allinea il token al ritratto** — interruttore generale (default: acceso)
-- **Solo i PNG** — lascia fuori i personaggi giocanti (default: spento)
-- **Ritratti segnaposto**, **Cartelle di segnaposto**, **Cartella delle miniature** — le
-  regole di "cosa non e' arte vera", una voce per riga. I default sono quelli storici
-  (icone di serie di Foundry, il drago di Daggerheart, la convenzione `/thumbs/` di dnd5e):
-  un altro sistema aggiunge i propri senza toccare il codice.
-- **Allinea i token esistenti…** — bottone: anteprima e poi scrittura in blocco per gli
-  attori che esistono gia'. Riempie solo i token vuoti o al segnaposto, mai arte vera.
-  Da macro: `game.modules.get("arte-token").api.allinea({ dryRun: true })` restituisce il piano
-  senza scrivere.
+- **Sync the token to the portrait** — master switch (default: on)
+- **NPCs only** — leave player characters out (default: off)
+- **Placeholder portraits**, **Placeholder folders**, **Thumbnail folder** — the "what is not real
+  art" rules, one entry per line. Defaults cover Foundry's built-in icons, the Daggerheart
+  `dragon-head` placeholder and the dnd5e `/thumbs/` convention. Add your own system's.
+- **Sync existing tokens…** — a button: preview, then a bulk write for actors that already
+  exist. Only empty or placeholder tokens are filled. From a macro:
+  `game.modules.get("arte-token").api.allinea({ dryRun: true })` returns the plan without writing.
 
-## Anello dinamico
+## Dynamic token ring
 
-Se il token ha l'anello acceso e un soggetto proprio (`ring.subject.texture`), quel soggetto
-**sovrascrive** l'arte del token: allinearne solo `texture.src` non si vedrebbe. Il soggetto
-segue con la stessa regola del token — solo se era un segnaposto o uguale al vecchio ritratto.
-Un soggetto scelto apposta resta dov'e'.
+With the ring enabled and its own subject (`ring.subject.texture`), that subject **overrides** the
+token art, so syncing `texture.src` alone would be invisible. The subject follows by the same rule as
+the token: only if it was a placeholder or matched the old portrait.
 
-## Limiti noti
+## Known limits
 
-- Cambia il **token prototipo** dell'attore. I token gia' piazzati sulle scene non cambiano:
-  e' il comportamento normale di Foundry per gli attori non collegati.
-- Il bottone "Allinea i token esistenti" lavora sugli attori del **mondo**, non su quelli
-  dentro i compendi.
+- It changes the actor's **prototype token**. Tokens already placed on scenes don't change —
+  standard Foundry behavior for unlinked actors.
+- The bulk button works on **world** actors, not on those inside compendiums.
 
-## Struttura
+## Development
 
-- `module/lib/arte-token.mjs` — solo la decisione: funzioni pure, nessun globale
-  di Foundry, tutto testato. Ogni rifiuto porta un `motivo` leggibile, che e' cio'
-  che rende diagnosticabile un'automazione che gira da sola.
-- `module/arte-token.mjs` — i due hook e le impostazioni
-- `module/apps/allinea.mjs` — anteprima e scrittura in blocco (usa `DialogV2`)
-- `test/` — `npm test`, test runner di Node, nessuna dipendenza
+    npm test          # Node's test runner, no dependencies
 
-## Deploy
+- `module/lib/arte-token.mjs` — the decision only: pure functions, no Foundry globals, fully
+  tested. Every refusal carries a readable `motivo`, which makes a self-running automation debuggable.
+- `module/arte-token.mjs` — the hooks and the settings
+- `module/apps/allinea.mjs` — bulk preview and write (`DialogV2`)
+- `deploy.sh` — rsync to your own server; see the variables at the top of the file
 
-    ./deploy.sh
+## Releasing
 
-Il container Foundry gira come uid 1000: `deploy.sh` fa il `chown` da se'.
-Alla prima installazione serve `docker restart foundry` perche' il modulo
-compaia in Manage Modules.
+Create a GitHub release tagged `vX.Y.Z`: the workflow runs the tests, writes the version and
+download URL into `module.json`, and attaches `module.json` + `module.zip`.
+
+## License
+
+MIT

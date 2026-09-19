@@ -1,9 +1,35 @@
 {
   "id": "arte-token",
-  "title": "Arte del token",
-  "description": "Tiene il token allineato al ritratto dell'attore, senza sovrascrivere le scelte fatte apposta.",
+  "title": "Token Art Sync",
+  "description": "Keeps an actor's token art in sync with its portrait, without overriding choices made on purpose. Configurable placeholder rules, dynamic token ring support and a bulk sync for existing actors.",
   "version": "1.0.0",
-  "compatibility": { "minimum": "13", "verified": "14" },
-  "authors": [{ "name": "Francesco Nguyen" }],
-  "esmodules": ["arte-token.mjs"]
+  "compatibility": {
+    "minimum": "14",
+    "verified": "14"
+  },
+  "authors": [
+    {
+      "name": "Francesco Nguyen"
+    }
+  ],
+  "url": "https://github.com/vietts/arte-token",
+  "manifest": "https://github.com/vietts/arte-token/releases/latest/download/module.json",
+  "download": "https://github.com/vietts/arte-token/releases/latest/download/module.zip",
+  "bugs": "https://github.com/vietts/arte-token/issues",
+  "license": "https://github.com/vietts/arte-token/blob/main/LICENSE",
+  "esmodules": [
+    "arte-token.mjs"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    },
+    {
+      "lang": "it",
+      "name": "Italiano",
+      "path": "lang/it.json"
+    }
+  ]
 }

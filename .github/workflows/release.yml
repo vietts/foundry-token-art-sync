@@ -1,0 +1,41 @@
+name: Release
+
+# Si pubblica creando una release su GitHub con un tag "vX.Y.Z". Il workflow scrive la versione
+# e l'URL dello zip nel module.json, poi allega module.json e module.zip: il manifest "latest"
+# in module.json punta sempre all'ultima release.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm test
+
+      - name: Imposta versione e download nel manifest
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          jq --arg v "$VERSION" \
+             --arg d "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/module.zip" \
+             '.version = $v | .download = $d' module/module.json > module.json
+          cp module.json module/module.json
+
+      - name: Zip del modulo
+        run: cd module && zip -r ../module.zip .
+
+      - name: Allega alla release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            module.json
+            module.zip
