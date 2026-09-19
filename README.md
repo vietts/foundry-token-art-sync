@@ -40,6 +40,28 @@ non compare sbagliato per poi cambiare sotto gli occhi.
 
 - **Allinea il token al ritratto** — interruttore generale (default: acceso)
 - **Solo i PNG** — lascia fuori i personaggi giocanti (default: spento)
+- **Ritratti segnaposto**, **Cartelle di segnaposto**, **Cartella delle miniature** — le
+  regole di "cosa non e' arte vera", una voce per riga. I default sono quelli storici
+  (icone di serie di Foundry, il drago di Daggerheart, la convenzione `/thumbs/` di dnd5e):
+  un altro sistema aggiunge i propri senza toccare il codice.
+- **Allinea i token esistenti…** — bottone: anteprima e poi scrittura in blocco per gli
+  attori che esistono gia'. Riempie solo i token vuoti o al segnaposto, mai arte vera.
+  Da macro: `game.modules.get("arte-token").api.allinea({ dryRun: true })` restituisce il piano
+  senza scrivere.
+
+## Anello dinamico
+
+Se il token ha l'anello acceso e un soggetto proprio (`ring.subject.texture`), quel soggetto
+**sovrascrive** l'arte del token: allinearne solo `texture.src` non si vedrebbe. Il soggetto
+segue con la stessa regola del token — solo se era un segnaposto o uguale al vecchio ritratto.
+Un soggetto scelto apposta resta dov'e'.
+
+## Limiti noti
+
+- Cambia il **token prototipo** dell'attore. I token gia' piazzati sulle scene non cambiano:
+  e' il comportamento normale di Foundry per gli attori non collegati.
+- Il bottone "Allinea i token esistenti" lavora sugli attori del **mondo**, non su quelli
+  dentro i compendi.
 
 ## Struttura
 
@@ -47,6 +69,7 @@ non compare sbagliato per poi cambiare sotto gli occhi.
   di Foundry, tutto testato. Ogni rifiuto porta un `motivo` leggibile, che e' cio'
   che rende diagnosticabile un'automazione che gira da sola.
 - `module/arte-token.mjs` — i due hook e le impostazioni
+- `module/apps/allinea.mjs` — anteprima e scrittura in blocco (usa `DialogV2`)
 - `test/` — `npm test`, test runner di Node, nessuna dipendenza
 
 ## Deploy

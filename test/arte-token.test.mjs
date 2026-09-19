@@ -134,3 +134,114 @@ test("un attore malformato non fa esplodere niente", () => {
   assert.equal(decideTokenArtUpdate(null, null).sync, false);
   assert.equal(decideTokenArtUpdate({}, { img: "assets/x.png" }).sync, true);
 });
+
+/* --- regole configurabili --- */
+
+import {
+  REGOLE_DEFAULT, parseElenco, normalizzaRegole, pianoAllineamento, CAMPO_ANELLO, tokenArtUpdate as upd
+} from "../module/lib/arte-token.mjs";
+
+test("le regole di default coincidono con il comportamento storico", () => {
+  assert.deepEqual(REGOLE_DEFAULT.segnaposto, [...SEGNAPOSTO]);
+  assert.deepEqual(REGOLE_DEFAULT.prefissi, ["icons/svg/"]);
+  assert.equal(REGOLE_DEFAULT.cartellaMiniature, "/thumbs/");
+});
+
+test("parseElenco: una voce per riga, spazi e righe vuote ignorati", () => {
+  assert.deepEqual(parseElenco("  a.svg \n\n b.svg\r\n"), ["a.svg", "b.svg"]);
+  assert.deepEqual(parseElenco(""), []);
+  assert.deepEqual(parseElenco(undefined), []);
+});
+
+test("normalizzaRegole completa i campi mancanti con i default", () => {
+  assert.deepEqual(normalizzaRegole({}), REGOLE_DEFAULT);
+  assert.deepEqual(normalizzaRegole({ segnaposto: ["x.svg"] }).prefissi, ["icons/svg/"]);
+});
+
+test("un segnaposto aggiunto dall'utente non viene propagato", () => {
+  const regole = normalizzaRegole({ segnaposto: ["mio/default.png"] });
+  assert.equal(isSegnaposto("mio/default.png", regole), true);
+  assert.equal(decideTokenArt(attore("mio/default.png", DEFAULT), { regole }).sync, false);
+  assert.equal(isSegnaposto("mio/default.png"), false);   // senza la regola e' arte vera
+});
+
+test("un prefisso aggiunto dall'utente conta come segnaposto", () => {
+  const regole = normalizzaRegole({ prefissi: ["icons/svg/", "sistema/default/"] });
+  assert.equal(isSegnaposto("sistema/default/x.png", regole), true);
+});
+
+test("la cartella delle miniature e' configurabile, e vuota la disattiva", () => {
+  const regole = normalizzaRegole({ cartellaMiniature: "/small/" });
+  assert.equal(isMiniatura("t/small/a.webp", "t/a.webp", regole), true);
+  assert.equal(isMiniatura("t/thumbs/a.webp", "t/a.webp", regole), false);
+  const senza = normalizzaRegole({ cartellaMiniature: "" });
+  assert.equal(isMiniatura("t/thumbs/a.webp", "t/a.webp", senza), false);
+});
+
+/* --- anello dinamico --- */
+
+const conAnello = (img, src, soggetto) => ({
+  img, type: "npc",
+  prototypeToken: { texture: { src }, ring: { enabled: true, subject: { texture: soggetto } } }
+});
+
+test("anello: il soggetto che seguiva il vecchio ritratto segue anche il nuovo", () => {
+  const a = conAnello("assets/vecchia.png", "assets/vecchia.png", "assets/vecchia.png");
+  const esito = decideTokenArtUpdate(a, { img: "assets/nuova.png" });
+  assert.deepEqual(esito, { sync: true, src: "assets/nuova.png", anello: true });
+  assert.deepEqual(upd(esito.src, esito), {
+    "prototypeToken.texture.src": "assets/nuova.png",
+    [CAMPO_ANELLO]: "assets/nuova.png"
+  });
+});
+
+test("anello: un soggetto scelto apposta non si tocca, il token si allinea comunque", () => {
+  const a = conAnello("assets/vecchia.png", "assets/vecchia.png", "assets/soggetto-scelto.png");
+  const esito = decideTokenArtUpdate(a, { img: "assets/nuova.png" });
+  assert.equal(esito.sync, true);
+  assert.equal(esito.anello, undefined);
+  assert.deepEqual(upd(esito.src, esito), { "prototypeToken.texture.src": "assets/nuova.png" });
+});
+
+test("anello spento o senza soggetto: nessun campo in piu'", () => {
+  const spento = { img: "a", type: "npc", prototypeToken: { texture: { src: "a" }, ring: { enabled: false, subject: { texture: "a" } } } };
+  assert.equal(decideTokenArtUpdate(spento, { img: "b" }).anello, undefined);
+  const vuoto = conAnello("a", "a", "");
+  assert.equal(decideTokenArtUpdate(vuoto, { img: "b" }).anello, undefined);
+  assert.equal(decideTokenArtUpdate(attore("a", "a"), { img: "b" }).anello, undefined);
+});
+
+test("anello: se l'update imposta gia' il soggetto, comanda lui", () => {
+  const a = conAnello("a", "a", "a");
+  assert.equal(decideTokenArtUpdate(a, { img: "b", [CAMPO_ANELLO]: "scelto" }).sync, false);
+});
+
+/* --- allineamento degli attori esistenti --- */
+
+test("piano: allinea i token vuoti o al segnaposto, lascia stare gli altri e dice perche'", () => {
+  const attori = [
+    { id: "1", name: "Lamia", ...attore("assets/Lamia.png", DEFAULT) },
+    { id: "2", name: "Willow", ...attore("assets/gildan.webp", "assets/Elf.png") },
+    { id: "3", name: "Drago", ...attore(DRAGO, DRAGO) },
+    { id: "4", name: "GiaOk", ...attore("assets/x.png", "assets/x.png") },
+    { id: "5", name: "Anello", ...conAnello("assets/r.png", DEFAULT, DEFAULT) }
+  ];
+  const piano = pianoAllineamento(attori);
+  assert.deepEqual(piano.daAllineare.map(p => p.id), ["1", "5"]);
+  assert.equal(piano.daAllineare[0].src, "assets/Lamia.png");
+  assert.equal(piano.daAllineare[1].anello, true);
+  assert.equal(piano.saltati.length, 3);
+  for (const s of piano.saltati) assert.ok(s.motivo.length > 0);
+  assert.equal(piano.riepilogo["il token ha gia' arte sua"], 1);
+});
+
+test("piano: soloPng e regole personalizzate valgono anche in blocco", () => {
+  const pg = { id: "1", name: "PG", img: "assets/a.png", type: "character", prototypeToken: { texture: { src: DEFAULT } } };
+  assert.equal(pianoAllineamento([pg], { onlyNpc: true }).daAllineare.length, 0);
+  assert.equal(pianoAllineamento([pg]).daAllineare.length, 1);
+});
+
+test("piano: un elenco vuoto o malformato non esplode", () => {
+  assert.deepEqual(pianoAllineamento([]).daAllineare, []);
+  assert.equal(pianoAllineamento([null, {}]).daAllineare.length, 0);
+});
