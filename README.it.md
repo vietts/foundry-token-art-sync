@@ -3,7 +3,7 @@
 Modulo Foundry (v13/v14, qualsiasi sistema) che tiene il **token allineato al
 ritratto** dell'attore, senza mai ribaltare una scelta fatta apposta.
 
-Sta su `il tuo server`. Va acceso **in ogni mondo** in cui lo vuoi.
+Va acceso **in ogni mondo** in cui lo vuoi (Manage Modules).
 
 ## La regola
 
