@@ -245,3 +245,53 @@ test("piano: un elenco vuoto o malformato non esplode", () => {
   assert.deepEqual(pianoAllineamento([]).daAllineare, []);
   assert.equal(pianoAllineamento([null, {}]).daAllineare.length, 0);
 });
+
+/* --- token gia' in scena --- */
+
+import { tokenInScenaDaAllineare } from "../module/lib/arte-token.mjs";
+
+const inScena = (src, ring) => ({ texture: { src }, ...(ring ? { ring } : {}) });
+const cambio = { imgVecchia: "assets/vecchio.png", srcVecchio: "assets/vecchio-token.png", imgNuova: "assets/nuovo.png" };
+
+test("un token in scena col ritratto vecchio segue il nuovo", () => {
+  assert.deepEqual(tokenInScenaDaAllineare(inScena("assets/vecchio.png"), cambio), { "texture.src": "assets/nuovo.png" });
+});
+
+test("un token in scena con l'arte del prototipo vecchio segue anche lui", () => {
+  assert.deepEqual(tokenInScenaDaAllineare(inScena("assets/vecchio-token.png"), cambio), { "texture.src": "assets/nuovo.png" });
+});
+
+test("un token in scena al segnaposto si riempie", () => {
+  assert.deepEqual(tokenInScenaDaAllineare(inScena(DEFAULT), cambio), { "texture.src": "assets/nuovo.png" });
+});
+
+test("un token in scena con arte sua resta com'e'", () => {
+  assert.equal(tokenInScenaDaAllineare(inScena("assets/scelto-apposta.png"), cambio), null);
+});
+
+test("un ritratto nuovo segnaposto non finisce mai su un token in scena", () => {
+  assert.equal(tokenInScenaDaAllineare(inScena("assets/vecchio.png"), { ...cambio, imgNuova: DRAGO }), null);
+});
+
+test("un token gia' allineato non produce scritture", () => {
+  assert.equal(tokenInScenaDaAllineare(inScena("assets/nuovo.png"), cambio), null);
+});
+
+test("un token non collegato (senza prototipo) segue solo il ritratto vecchio", () => {
+  const sintetico = { ...cambio, srcVecchio: null };
+  assert.deepEqual(tokenInScenaDaAllineare(inScena("assets/vecchio.png"), sintetico), { "texture.src": "assets/nuovo.png" });
+  assert.equal(tokenInScenaDaAllineare(inScena("assets/vecchio-token.png"), sintetico), null);
+});
+
+test("l'anello dinamico del token in scena segue con la stessa regola", () => {
+  const anello = { enabled: true, subject: { texture: "assets/vecchio.png" } };
+  assert.deepEqual(tokenInScenaDaAllineare(inScena("assets/scelto-apposta.png", anello), cambio),
+    { "ring.subject.texture": "assets/nuovo.png" });
+});
+
+/* --- soloPng in Daggerheart --- */
+
+test("soloPng tiene dentro gli avversari di Daggerheart", () => {
+  const avversario = { img: "assets/a.png", type: "adversary", prototypeToken: { texture: { src: "assets/a.png" } } };
+  assert.equal(decideTokenArtUpdate(avversario, { img: "assets/b.png" }, { onlyNpc: true }).sync, true);
+});

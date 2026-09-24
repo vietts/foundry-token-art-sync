@@ -75,13 +75,63 @@ Hooks.on("preCreateActor", actor => {
 /*
  * Modifica del ritratto: il caso di tutti i giorni. Scriviamo dentro `changes`, quindi parte
  * un update solo — il token non compare sbagliato per poi cambiare sotto gli occhi.
+ *
+ * Qui si decide anche per i token gia' in scena, ma si scrive dopo (updateActor): servono il
+ * ritratto e il prototipo di PRIMA, e Foundry passa a pre e post update due copie diverse
+ * delle opzioni (actor-delta.mjs, v14), quindi non ci si puo' appoggiare li'. Li tiene questa
+ * mappa, per uuid, solo sul client che fa la modifica.
  */
+const primaDellUpdate = new Map();
+
 Hooks.on("preUpdateActor", (actor, changes) => {
   if (!attivo()) return;
+  if (changes?.img === undefined) return;
+
+  /* Un token non collegato modificato dalla sua scheda: l'attore e' sintetico e il suo
+     prototipo non esiste davvero. Conta solo quel token. */
+  if (actor.isToken) {
+    if (opzioni().onlyNpc && actor.type === "character") return;
+    primaDellUpdate.set(actor.uuid, { imgVecchia: actor.img, srcVecchio: null });
+    return;
+  }
+
   const esito = arte.decideTokenArtUpdate(actor, changes, opzioni());
   if (!esito.sync) return;
+  primaDellUpdate.set(actor.uuid, { imgVecchia: actor.img, srcVecchio: actor.prototypeToken.texture.src });
   Object.assign(changes, arte.tokenArtUpdate(esito.src, esito));
   console.log(`${MODULE_ID} | ${actor.name}: token segue il ritratto → ${esito.src}`);
+});
+
+Hooks.on("updateActor", async (actor, changed, options, userId) => {
+  if (userId !== game.user.id) return;
+  const prima = primaDellUpdate.get(actor.uuid);
+  primaDellUpdate.delete(actor.uuid);
+  if (!prima || changed?.img === undefined) return;
+
+  const regole = opzioni().regole;
+  const token = actor.isToken
+    ? [actor.token]
+    : game.scenes.contents.flatMap(s => s.tokens.filter(t => t.actorId === actor.id));
+
+  /* Un giocatore che cambia il ritratto del suo PG non puo' scrivere token altrui: si toccano
+     solo quelli di cui e' proprietario. Il GM li vede tutti. */
+  const perScena = new Map();
+  for (const t of token) {
+    if (!t?.isOwner) continue;
+    const changes = arte.tokenInScenaDaAllineare(t, { ...prima, imgNuova: actor.img, regole });
+    if (!changes) continue;
+    if (!perScena.has(t.parent)) perScena.set(t.parent, []);
+    perScena.get(t.parent).push({ _id: t.id, ...changes });
+  }
+
+  for (const [scena, updates] of perScena) {
+    try {
+      await scena.updateEmbeddedDocuments("Token", updates);
+      console.log(`${MODULE_ID} | ${actor.name}: ${updates.length} token in "${scena.name}" seguono il ritratto`);
+    } catch (e) {
+      console.error(`${MODULE_ID} | ${actor.name}: token in "${scena.name}" non aggiornati`, e);
+    }
+  }
 });
 
 Hooks.once("ready", () => {

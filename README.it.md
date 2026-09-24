@@ -39,7 +39,7 @@ non compare sbagliato per poi cambiare sotto gli occhi.
 *Configura impostazioni → Impostazioni modulo*
 
 - **Allinea il token al ritratto** — interruttore generale (default: acceso)
-- **Solo i PNG** — lascia fuori i personaggi giocanti (default: spento)
+- **Solo i PNG** — lascia fuori i personaggi giocanti (`character`); restano dentro gli `npc` di dnd5e e gli `adversary` di Daggerheart (default: spento)
 - **Ritratti segnaposto**, **Cartelle di segnaposto**, **Cartella delle miniature** — le
   regole di "cosa non e' arte vera", una voce per riga. I default sono quelli storici
   (icone di serie di Foundry, il drago di Daggerheart, la convenzione `/thumbs/` di dnd5e):
@@ -58,8 +58,13 @@ Un soggetto scelto apposta resta dov'e'.
 
 ## Limiti noti
 
-- Cambia il **token prototipo** dell'attore. I token gia' piazzati sulle scene non cambiano:
-  e' il comportamento normale di Foundry per gli attori non collegati.
+- Cambiare un ritratto aggiorna anche i token **gia' piazzati** su tutte le scene, con la
+  stessa regola: solo quelli che mostravano il ritratto vecchio, l'arte del prototipo vecchio o
+  un segnaposto. Un token a cui hai dato un'arte sua resta com'e'.
+- Cambiare il ritratto dalla scheda di un **token non collegato** aggiorna solo quel token (il
+  suo prototipo non esiste per conto suo), se mostrava il ritratto vecchio.
+- Un giocatore aggiorna solo i token di cui e' proprietario; il GM tutti.
+- Si va solo da ritratto a token. Cambiare il token non tocca mai il ritratto.
 - Il bottone "Allinea i token esistenti" lavora sugli attori del **mondo**, non su quelli
   dentro i compendi.
 
