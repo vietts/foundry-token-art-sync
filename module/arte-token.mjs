@@ -92,11 +92,15 @@ Hooks.on("preUpdateActor", (actor, changes) => {
   if (actor.isToken) {
     if (opzioni().onlyNpc && actor.type === "character") return;
     primaDellUpdate.set(actor.uuid, { imgVecchia: actor.img, srcVecchio: null });
+    console.log(`${MODULE_ID} | ${actor.name} (token non collegato): ritratto in modifica, controllo il token dopo il salvataggio`);
     return;
   }
 
   const esito = arte.decideTokenArtUpdate(actor, changes, opzioni());
-  if (!esito.sync) return;
+  if (!esito.sync) {
+    console.log(`${MODULE_ID} | ${actor.name}: prototipo lasciato com'e' — ${esito.motivo}`);
+    return;
+  }
   primaDellUpdate.set(actor.uuid, { imgVecchia: actor.img, srcVecchio: actor.prototypeToken.texture.src });
   Object.assign(changes, arte.tokenArtUpdate(esito.src, esito));
   console.log(`${MODULE_ID} | ${actor.name}: token segue il ritratto → ${esito.src}`);
@@ -104,11 +108,22 @@ Hooks.on("preUpdateActor", (actor, changes) => {
 
 Hooks.on("updateActor", async (actor, changed, options, userId) => {
   if (userId !== game.user.id) return;
-  const prima = primaDellUpdate.get(actor.uuid);
+  let prima = primaDellUpdate.get(actor.uuid);
   primaDellUpdate.delete(actor.uuid);
-  if (!prima || changed?.img === undefined) return;
+  if (changed?.img === undefined) return;
+  /* Per un token non collegato basta l'arte dell'attore del mondo per decidere: se il "prima"
+     mancasse, il confronto con quella regge da solo. Per un attore del mondo no: senza il
+     prima non si sa se il prototipo seguiva. */
+  if (!prima) {
+    if (!actor.isToken || !attivo()) return;
+    if (opzioni().onlyNpc && actor.type === "character") return;
+    prima = { imgVecchia: null, srcVecchio: null };
+  }
 
   const regole = opzioni().regole;
+  /* L'arte dell'attore del mondo, per i token non collegati: vedi tokenInScenaDaAllineare. */
+  const base = actor.isToken ? actor.token?.baseActor : null;
+  const origine = base ? [base.img, base.prototypeToken?.texture?.src] : [];
   const token = actor.isToken
     ? [actor.token]
     : game.scenes.contents.flatMap(s => s.tokens.filter(t => t.actorId === actor.id));
@@ -118,8 +133,11 @@ Hooks.on("updateActor", async (actor, changed, options, userId) => {
   const perScena = new Map();
   for (const t of token) {
     if (!t?.isOwner) continue;
-    const changes = arte.tokenInScenaDaAllineare(t, { ...prima, imgNuova: actor.img, regole });
-    if (!changes) continue;
+    const changes = arte.tokenInScenaDaAllineare(t, { ...prima, imgNuova: actor.img, origine, regole });
+    if (!changes) {
+      console.log(`${MODULE_ID} | ${actor.name}: token "${t.name}" lasciato com'e' — ha un'arte sua (${t.texture?.src})`);
+      continue;
+    }
     if (!perScena.has(t.parent)) perScena.set(t.parent, []);
     perScena.get(t.parent).push({ _id: t.id, ...changes });
   }

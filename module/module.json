@@ -2,7 +2,7 @@
   "id": "arte-token",
   "title": "Token Art Sync",
   "description": "Keeps an actor's token art in sync with its portrait, without overriding choices made on purpose. Configurable placeholder rules, dynamic token ring support and a bulk sync for existing actors.",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "compatibility": {
     "minimum": "14",
     "verified": "14"
