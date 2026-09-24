@@ -225,11 +225,17 @@ export function pianoAllineamento(attori, { onlyNpc = false, regole = REGOLE_DEF
  * @param p.srcVecchio  l'arte del prototipo prima dell'update (null per un token non collegato
  *                      modificato dalla sua scheda: li' il prototipo non c'entra)
  * @param p.imgNuova    il ritratto nuovo
+ * @param p.origine     per un token non collegato: l'arte dell'attore del mondo da cui viene
+ *                      (ritratto e token prototipo). Un token che la mostra sta seguendo
+ *                      l'originale, non ha un'arte scelta per lui — anche se il ritratto della
+ *                      sua copia era gia' stato cambiato prima (il caso del Courtier, 24/9/2026:
+ *                      secondo cambio di ritratto, token rimasto all'arte del mondo e saltato).
  * @returns {object|null} il changeset del token, o null se non va toccato
  */
-export function tokenInScenaDaAllineare(token, { imgVecchia, srcVecchio = null, imgNuova, regole = REGOLE_DEFAULT } = {}) {
+export function tokenInScenaDaAllineare(token, { imgVecchia, srcVecchio = null, imgNuova, origine = [], regole = REGOLE_DEFAULT } = {}) {
   if (isSegnaposto(imgNuova, regole)) return null;
-  const segue = src => isSegnaposto(src, regole) || src === imgVecchia || (srcVecchio != null && src === srcVecchio);
+  const seguiva = new Set([imgVecchia, srcVecchio, ...origine].filter(Boolean));
+  const segue = src => isSegnaposto(src, regole) || seguiva.has(src);
 
   const changes = {};
   const src = token?.texture?.src ?? "";

@@ -295,3 +295,11 @@ test("soloPng tiene dentro gli avversari di Daggerheart", () => {
   const avversario = { img: "assets/a.png", type: "adversary", prototypeToken: { texture: { src: "assets/a.png" } } };
   assert.equal(decideTokenArtUpdate(avversario, { img: "assets/b.png" }, { onlyNpc: true }).sync, true);
 });
+
+test("un token non collegato che mostra l'arte dell'attore del mondo la segue, anche al secondo cambio", () => {
+  // Il Courtier: ritratto della copia gia' cambiato una volta, token ancora all'arte del mondo.
+  const courtier = { imgVecchia: "assets/lady.png", srcVecchio: null, imgNuova: "assets/altra.png",
+                     origine: ["assets/elf-king.png", "assets/elf-king.png"] };
+  assert.deepEqual(tokenInScenaDaAllineare(inScena("assets/elf-king.png"), courtier), { "texture.src": "assets/altra.png" });
+  assert.equal(tokenInScenaDaAllineare(inScena("assets/scelto-apposta.png"), courtier), null);
+});
