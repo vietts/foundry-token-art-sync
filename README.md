@@ -31,7 +31,7 @@ Both write *before* the actual save, so a single update happens and the token ne
 *Configure Settings → Module Settings*
 
 - **Sync the token to the portrait** — master switch (default: on)
-- **NPCs only** — leave player characters out (default: off)
+- **NPCs only** — leave player characters (`character`) out; dnd5e `npc` and Daggerheart `adversary` stay in (default: off)
 - **Placeholder portraits**, **Placeholder folders**, **Thumbnail folder** — the "what is not real
   art" rules, one entry per line. Defaults cover Foundry's built-in icons, the Daggerheart
   `dragon-head` placeholder and the dnd5e `/thumbs/` convention. Add your own system's.
@@ -47,8 +47,13 @@ the token: only if it was a placeholder or matched the old portrait.
 
 ## Known limits
 
-- It changes the actor's **prototype token**. Tokens already placed on scenes don't change —
-  standard Foundry behavior for unlinked actors.
+- Changing a portrait also updates the tokens **already placed** on every scene, by the same rule:
+  only those that showed the old portrait, the old prototype art or a placeholder. A token given
+  its own art stays as it is.
+- Changing the portrait from the sheet of an **unlinked token** updates only that token (its
+  prototype doesn't exist on its own), if it was showing the old portrait.
+- A player only updates tokens they own; the GM updates all of them.
+- The sync goes portrait → token only. Changing the token never touches the portrait.
 - The bulk button works on **world** actors, not on those inside compendiums.
 
 ## Development

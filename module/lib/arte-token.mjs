@@ -142,7 +142,10 @@ export function decideTokenArt(actor, { onlyNpc = false, soloSeSegnaposto = fals
   const src = token?.texture?.src ?? "";
 
   if (isSegnaposto(img, regole)) return salta(MOTIVI.segnaposto);
-  if (onlyNpc && actor?.type !== "npc") return salta(MOTIVI.nonPng);
+  /* PG = "character": e' il nome in dnd5e come in Daggerheart. Il contrario non vale — i nemici
+     sono "npc" in dnd5e ma "adversary" in Daggerheart — e controllare "npc" lasciava fuori tutti
+     gli avversari di Daggerheart proprio con l'opzione pensata per loro. */
+  if (onlyNpc && actor?.type === "character") return salta(MOTIVI.nonPng);
   if (token?.randomImg) return salta(MOTIVI.wildcard);
   if (src === img) return salta(MOTIVI.allineati);
   if (isMiniatura(img, src, regole)) return salta(MOTIVI.miniatura);
@@ -206,4 +209,34 @@ export function pianoAllineamento(attori, { onlyNpc = false, regole = REGOLE_DEF
     }
   }
   return { daAllineare, saltati, riepilogo };
+}
+
+/**
+ * I token GIA' PIAZZATI in scena. Il prototipo vale solo per i token trascinati dopo: ognuno di
+ * quelli sulla mappa porta la sua copia di `texture.src`, collegato o no, e senza questo passo
+ * cambiare il ritratto non cambiava niente di quello che si vede.
+ *
+ * Stessa regola di sempre, "segui solo se stavi gia' seguendo": un token segue se aveva il
+ * ritratto vecchio, l'arte del prototipo vecchio (che a sua volta seguiva, altrimenti non si
+ * arriva qui) o un segnaposto. Un token a cui hai dato un'arte sua resta com'e'.
+ *
+ * @param token  forma minima { texture: { src }, ring: { enabled, subject: { texture } } }
+ * @param p.imgVecchia  il ritratto prima dell'update
+ * @param p.srcVecchio  l'arte del prototipo prima dell'update (null per un token non collegato
+ *                      modificato dalla sua scheda: li' il prototipo non c'entra)
+ * @param p.imgNuova    il ritratto nuovo
+ * @returns {object|null} il changeset del token, o null se non va toccato
+ */
+export function tokenInScenaDaAllineare(token, { imgVecchia, srcVecchio = null, imgNuova, regole = REGOLE_DEFAULT } = {}) {
+  if (isSegnaposto(imgNuova, regole)) return null;
+  const segue = src => isSegnaposto(src, regole) || src === imgVecchia || (srcVecchio != null && src === srcVecchio);
+
+  const changes = {};
+  const src = token?.texture?.src ?? "";
+  if (src !== imgNuova && segue(src)) changes["texture.src"] = imgNuova;
+
+  const soggetto = token?.ring?.subject?.texture;
+  if (token?.ring?.enabled && soggetto && soggetto !== imgNuova && segue(soggetto)) changes["ring.subject.texture"] = imgNuova;
+
+  return Object.keys(changes).length ? changes : null;
 }
